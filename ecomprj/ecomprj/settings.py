@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-93q7c#bd@(p_iabf+&v5#-jv--2x1h+_%5&+f9v&w^t8&88x!p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['f633-62-16-0-185.ngrok-free.app', '127.0.0.1']
+ALLOWED_HOSTS = ['2ec7-62-16-0-185.ngrok-free.app', '127.0.0.1']
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
 

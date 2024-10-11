@@ -378,7 +378,7 @@ def checkout(request, oid):
         'version': '3',
         'sandbox': 0,  # Удалите эту строку для продакшн-режима
         # 'server_url': request.build_absolute_uri(reverse("core:liqpay_callback")),
-        'server_url': request.build_absolute_uri('https://f633-62-16-0-185.ngrok-free.app/billing/pay-callback/'),
+        'server_url': request.build_absolute_uri('https://2ec7-62-16-0-185.ngrok-free.app/billing/pay-callback/'),
         'result_url': request.build_absolute_uri(reverse("core:payment-result", args=[order.oid]))
     }
     form_html = liqpay.cnb_form(params)
@@ -497,7 +497,7 @@ def create_checkout_session(request, oid):
         ],
         mode='payment',
         success_url=request.build_absolute_uri(reverse("core:payment-completed", args=[order.oid])) + "?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url=request.build_absolute_uri(reverse("core:payment-failed"))
+        cancel_url=request.build_absolute_uri(reverse("core:payment-failed", args=[order.oid]))
     )
 
     order.paid_status = False
