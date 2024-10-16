@@ -8,6 +8,8 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=60)
     bio = models.CharField(max_length=150)
+    mfa_secret = models.CharField(max_length=16, blank=True, null=True)
+    mfa_enabled = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

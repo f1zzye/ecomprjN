@@ -64,6 +64,56 @@
                                                     <span>Name:</span><span><input class="mb-2" type="text" value=" {{profile.full_name}}"></span>
                                                     <span>Bio:</span><span><input class="mb-2" type="text" value=" {{profile.bio}}"></span>
                                                     <span>Phone:</span><span><input class="mb-2" type="text" value=" {{profile.phone}}"></span>
+
+                                                    <p>2FA Verification</p>
+                                                    <label class="switch">
+                                                        <input type="checkbox" id="toggleSwitch" {% if request.user.mfa_enabled %}checked{% endif %}>
+                                                        <span class="slider round"></span>
+                                                    </label>
+
+                                                    <div class="modal fade" id="qrCodeModal" tabindex="-1" role="dialog" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
+                                                        <div class="modal-dialog" role="document">
+                                                            <div class="modal-content">
+                                                                <div class="modal-header">
+                                                                    <h5 class="modal-title" id="qrCodeModalLabel">2FA Verification</h5>
+                                                                </div>
+                                                                <div class="modal-body">
+                                                                    {% if not request.user.mfa_enabled %}
+                                                                    <h4>
+                                                                        Enable 2FA with Authenticator App.
+                                                                    </h4>
+                                                                    <div>
+                                                                        <img src="{{ qrcode }}" alt="{{ img_path }}">
+
+                                                                        <form method="POST" action="{% url 'core:verify_mfa' %}" class="form text-center">
+                                                                            {% csrf_token %}
+                                                                            <div class="form-group text-">
+                                                                                <div class="mx-auto" style="width: 40%;">
+                                                                                    <input type="text" id="otp_code" name="otp_code" maxlength="6" required
+                                                                                           class="form-control" placeholder="Enter your OTP code">
+                                                                                </div>
+                                                                            </div>
+                                                                            <input type="hidden" name="user_id" value="{{ request.user.id }}">
+                                                                            <button class="btn btn-primary" type="submit">Verify</button>
+                                                                        </form>
+
+                                                                    </div>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <script>
+                                                        document.getElementById('toggleSwitch').addEventListener('change', function() {
+                                                            if(this.checked) {
+                                                                $('#qrCodeModal').modal('show');
+                                                            } else {
+                                                                window.location.href = "{% url 'core:disable_2fa' %}";
+                                                            }
+                                                        });
+                                                    </script>
+
                                                     {% if profile.verified == True %}
                                                     <div class="p-1">
                                                         <span style="color: green;">Verified</span> <span><i class="fas fa-check-circle"></i></span>
@@ -77,6 +127,7 @@
                                                         <a href="{% url 'userauths:profile-edit' %}" class="btn btn-succees">Edit Profile</a>
                                                     </div>
                                                 </div>
+
                                             </div>
 
                                             <!-- <div class="mt-4">

@@ -6,8 +6,6 @@ from django.conf import settings
 from userauths.models import User, Profile
 from userauths.forms import User, ProfileForm
 
-# User = settings.AUTH_USER_MODEL
-
 
 def register_view(request):
 
@@ -46,12 +44,14 @@ def login_view(request):
             user = authenticate(request, email=email, password=password)
 
             if user is not None:
+                if user.mfa_enabled:
+                    return render(request, 'userauths/otp_verify.html', {'user_id': user.id})
                 login(request, user)
                 messages.success(request, f'Welcome {user.username}')
                 return redirect('core:index')
             else:
                 messages.warning(request, 'User Does Not Exist, create an account.')
-        except:
+        except User.DoesNotExist:
             messages.warning(request, f'User with {email} does not exist')
 
     return render(request, 'userauths/sign-in.html')

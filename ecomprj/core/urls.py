@@ -60,4 +60,7 @@ urlpatterns = [
     path('billing/pay-callback/', liqpay_callback, name='liqpay_callback'),
 
     path('payment-result/<str:oid>/', payment_result, name='payment-result'),
+
+    path('verify_mfa/', views.verify_mfa, name='verify_mfa'),
+    path('disable-2fa/', views.disable_2fa, name='disable_2fa'),
 ]

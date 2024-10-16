@@ -12631,3 +12631,73 @@ footer .hotline img {
 }
 
 /*# sourceMappingURL=main.css.map */
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;  /* Уменьшено с 60px до 40px */
+  height: 20px; /* Уменьшено с 34px до 20px */
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #3BB77E;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 20px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+
+.modal-header {
+  background-color: transparent; /* Делает фон прозрачным */
+  border-bottom: none; /* Удаляет нижнюю границу */
+}
+
+.close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  color: red;
+  font-size: 1.5em;
+  z-index: 1;
+}

@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from taggit.models import Tag
 from core.models import Category, Tags, Vendor, Coupon, Product, ProductImages, CartOrder, CartOrderItems, ProductReview, WishList, Address
-from userauths.models import ContactUs, Profile
+from userauths.models import ContactUs, Profile, User
 from core.forms import ProductReviewForm
 from django.http import JsonResponse, HttpResponse
 from django.template.loader import render_to_string
@@ -24,7 +24,10 @@ import base64
 import hashlib
 import json
 
-from aiogram import Bot, exceptions
+import io
+import pyotp
+import qrcode
+from django.contrib.auth import login
 
 
 def index(request):
@@ -378,7 +381,7 @@ def checkout(request, oid):
         'version': '3',
         'sandbox': 0,  # Удалите эту строку для продакшн-режима
         # 'server_url': request.build_absolute_uri(reverse("core:liqpay_callback")),
-        'server_url': request.build_absolute_uri('https://2ec7-62-16-0-185.ngrok-free.app/billing/pay-callback/'),
+        'server_url': request.build_absolute_uri('https://6bc3-62-16-0-185.ngrok-free.app/billing/pay-callback/'),
         'result_url': request.build_absolute_uri(reverse("core:payment-result", args=[order.oid]))
     }
     form_html = liqpay.cnb_form(params)
@@ -527,11 +530,76 @@ def payment_failed(request, oid):
     return render(request, 'core/payment-failed.html')
 
 
+def verify_2fa_otp(user , otp ):
+    totp = pyotp.TOTP(user.mfa_secret)
+    if totp.verify(otp):
+        user.mfa_enabled = True
+        user.save()
+        return True
+    return False
+
+
+def verify_mfa(request):
+    if request.method == 'POST':
+        otp = request.POST.get('otp_code')
+        user_id = request.POST.get('user_id')
+        if not user_id:
+            messages.error(request, 'Invalid user id. Please try again.')
+            return render(request, 'userauths/otp_verify.html', {'user_id': user_id})
+
+        user = User.objects.get(id=user_id)
+        if verify_2fa_otp(user, otp):
+            if request.user.is_authenticated:
+                messages.success(request, '2FA enabled successfully !')
+                return redirect('core:dashboard')
+
+            login(request, user)
+            messages.success(request, 'Login successful!')
+            return redirect('core:dashboard')
+        else:
+            if request.user.is_authenticated:
+                messages.error(request, 'Invalid OTP code. Please try again.')
+                return redirect('core:dashboard')
+            messages.error(request, 'Invalid OTP code. Please try again.')
+            return render(request, 'userauths/otp_verify.html', {'user_id': user_id})
+
+    return render(request, 'userauths/otp_verify.html', {'user_id': user_id})
+
+
+@login_required
+def disable_2fa(request):
+    user = request.user
+    if user.mfa_enabled:
+        user.mfa_enabled = False
+        user.save()
+        messages.success(request, "Two-Factor Authentication has been disabled.")
+        return redirect('core:dashboard')
+    else:
+        messages.info(request, "2FA is already disabled.")
+    return redirect('core:dashboard')
+
+
 @login_required
 def customer_dashboard(request):
+    user = request.user
+    if not user.mfa_secret:
+        user.mfa_secret = pyotp.random_base32()
+        user.save()
+
+    otp_uri = pyotp.totp.TOTP(user.mfa_secret).provisioning_uri(
+        name=user.email,
+        issuer_name="NestShop"
+    )
+
+    qr = qrcode.make(otp_uri)
+    buffer = io.BytesIO()
+    qr.save(buffer, format="PNG")
+    buffer.seek(0)
+    qr_code = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    qr_code_data_uri = f"data:image/png;base64,{qr_code}"
+
     orders_list = CartOrder.objects.filter(user=request.user).order_by('-order_date')
     address = Address.objects.filter(user=request.user)
-
     profile = Profile.objects.get(user=request.user)
 
     orders = CartOrder.objects.annotate(month=ExtractMonth('order_date')).values('month').annotate(count=Count('id')).values('month', 'count')
@@ -561,6 +629,7 @@ def customer_dashboard(request):
         'orders': orders,
         'month': month,
         'total_orders': total_orders,
+        'qrcode': qr_code_data_uri,  # Добавьте QR-код в контекст
     }
     return render(request, 'core/dashboard.html', context)
 
